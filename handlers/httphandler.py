@@ -15,7 +15,7 @@ from structure.tools import *
 
 TEMP_CHANGE = dict()
 
-CAPTURE = False
+CAPTURE = True
 
 
 class CustomHandler(BaseHTTPRequestHandler):
@@ -305,6 +305,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                     rq.lang = prf.lang
                     rq.title = data[32:68].decode("utf-16-be").replace("\x00", "")
                     rq.message = data[68:140].decode("utf-16-be").replace("\x00", "")
+                    patchcleanup(rq)
                     buffer += rq.rid.to_bytes(8, "big")
                     db.insert_elements([rq])
 
@@ -403,6 +404,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                             aok.message = (
                                 data[128:200].decode("utf-16-be").replace("\x00", "")
                             )
+                            patchcleanup(aok)
                             db.insert_elements([aok])
                             buffer += b"\x00\x00\x00\x01"
 
@@ -495,6 +497,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                     thk.item = data[0:4]
                     thk.title = data[4:40].decode("utf-16-be").replace("\x00", "")
                     thk.message = data[40:112].decode("utf-16-be").replace("\x00", "")
+                    patchcleanup(thk)
                     db.insert_elements([thk])
 
                     buffer += b"\x00\x00\x00\x00"
@@ -1024,3 +1027,70 @@ class CustomHandler(BaseHTTPRequestHandler):
             ),
         }
         return main_template.format(**params).encode("utf-8")
+    def patchcleanup(rq):
+        if rq.game<3 or rq.lang==0:
+            return rq
+        rq.title=textclean(rq.title)
+        rq.message=textclean(rq.message)
+        return rq
+
+    def textclean(mailtext):
+        size=len(mailtext)
+        mailtext=halfen(mailtext).replace("「","　")
+        N=18
+        mailtext=mailtext[ : N] + "| " + mailtext[N : ]
+        vocab=mailtext.split()
+        replace=[]
+        needcap=1
+        lastflag=0
+        for x in vocab:
+            if x=="|":
+                if lastflag==1:
+                    needcap=1
+                replace.append(x)
+                continue
+            if any(filter(str.islower, x)):
+                needcap=2
+                lastflag=0
+            if x=="I" or x=="POKひMON":
+                needcap=1
+                lastflag=0
+            if needcap==0:
+                replace.append(x.lower())
+                lastflag=0
+            if needcap==1:
+                replace.append(x.capitalize())
+                lastflag=0
+                needcap=0
+            if needcap==2:
+                replace.append(x)
+                lastflag=0
+                needcap=0
+            if '.' in x or '!' in x or '?' in x:
+                needcap=1
+                lastflag=1
+        mailtext=""
+        for x in replace:
+            mailtext+=x
+            mailtext+=" "
+        mailtext=fullen(mailtext)
+        mailtext=mailtext.split("｜　")
+        final=""
+        for x in mailtext:
+            final+=(x.replace("　．","．").replace("　！","！").replace("　？","？").replace("  "," ").replace("  "," ").replace("  "," ")).ljust(18, '　')
+        final=final[0:size]
+        return final
+    def halfen(s):
+         FULL2HALF = dict((i + 0xFEE0, i) for i in range(0x21, 0x7F))
+         FULL2HALF[0x3000] = 0x20
+         '''
+         Convert full-width characters to ASCII counterpart
+         '''
+         return str(s).translate(FULL2HALF)
+    def fullen(s):
+         HALF2FULL = dict((i, i + 0xFEE0) for i in range(0x21, 0x7F))
+         HALF2FULL[0x20] = 0x3000
+         '''
+         Convert all ASCII characters to the full-width counterpart.
+         '''
+         return str(s).translate(HALF2FULL)
