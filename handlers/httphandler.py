@@ -1073,7 +1073,7 @@ class CustomHandler(BaseHTTPRequestHandler):
         for x in replace:
             mailtext+=x
             mailtext+=" "
-        mailtext=self.fullen(self, mailtext)
+        mailtext=self.fullen(mailtext)
         mailtext=mailtext.split("｜　")
         final=""
         for x in mailtext:
