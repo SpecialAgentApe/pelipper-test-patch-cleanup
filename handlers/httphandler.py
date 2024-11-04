@@ -1027,7 +1027,7 @@ class CustomHandler(BaseHTTPRequestHandler):
             ),
         }
         return main_template.format(**params).encode("utf-8")
-    def patchcleanup(rq):
+    def patchcleanup(self,rq):
         if rq.game<3 or rq.lang==0:
             return rq
         rq.title=self.textclean(rq.title)
