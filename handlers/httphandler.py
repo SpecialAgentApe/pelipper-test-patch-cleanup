@@ -1034,7 +1034,7 @@ class CustomHandler(BaseHTTPRequestHandler):
         rq.message=self.textclean(rq.message)
         return rq
 
-    def textclean(mailtext):
+    def textclean(self, mailtext):
         size=len(mailtext)
         mailtext=self.halfen(mailtext).replace("「","　")
         N=18
@@ -1073,21 +1073,21 @@ class CustomHandler(BaseHTTPRequestHandler):
         for x in replace:
             mailtext+=x
             mailtext+=" "
-        mailtext=self.fullen(mailtext)
+        mailtext=self.fullen(self, mailtext)
         mailtext=mailtext.split("｜　")
         final=""
         for x in mailtext:
             final+=(x.replace("　．","．").replace("　！","！").replace("　？","？").replace("  "," ").replace("  "," ").replace("  "," ")).ljust(18, '　')
         final=final[0:size]
         return final
-    def halfen(s):
+    def halfen(self, s):
          FULL2HALF = dict((i + 0xFEE0, i) for i in range(0x21, 0x7F))
          FULL2HALF[0x3000] = 0x20
          '''
          Convert full-width characters to ASCII counterpart
          '''
          return str(s).translate(FULL2HALF)
-    def fullen(s):
+    def fullen(self, s):
          HALF2FULL = dict((i, i + 0xFEE0) for i in range(0x21, 0x7F))
          HALF2FULL[0x20] = 0x3000
          '''
