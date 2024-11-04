@@ -305,7 +305,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                     rq.lang = prf.lang
                     rq.title = data[32:68].decode("utf-16-be").replace("\x00", "")
                     rq.message = data[68:140].decode("utf-16-be").replace("\x00", "")
-                    patchcleanup(rq)
+                    self.patchcleanup(rq)
                     buffer += rq.rid.to_bytes(8, "big")
                     db.insert_elements([rq])
 
@@ -404,7 +404,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                             aok.message = (
                                 data[128:200].decode("utf-16-be").replace("\x00", "")
                             )
-                            patchcleanup(aok)
+                            self.patchcleanup(aok)
                             db.insert_elements([aok])
                             buffer += b"\x00\x00\x00\x01"
 
@@ -497,7 +497,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                     thk.item = data[0:4]
                     thk.title = data[4:40].decode("utf-16-be").replace("\x00", "")
                     thk.message = data[40:112].decode("utf-16-be").replace("\x00", "")
-                    patchcleanup(thk)
+                    self.patchcleanup(thk)
                     db.insert_elements([thk])
 
                     buffer += b"\x00\x00\x00\x00"
@@ -1030,13 +1030,13 @@ class CustomHandler(BaseHTTPRequestHandler):
     def patchcleanup(rq):
         if rq.game<3 or rq.lang==0:
             return rq
-        rq.title=textclean(rq.title)
-        rq.message=textclean(rq.message)
+        rq.title=self.textclean(rq.title)
+        rq.message=self.textclean(rq.message)
         return rq
 
     def textclean(mailtext):
         size=len(mailtext)
-        mailtext=halfen(mailtext).replace("「","　")
+        mailtext=self.halfen(mailtext).replace("「","　")
         N=18
         mailtext=mailtext[ : N] + "| " + mailtext[N : ]
         vocab=mailtext.split()
@@ -1073,7 +1073,7 @@ class CustomHandler(BaseHTTPRequestHandler):
         for x in replace:
             mailtext+=x
             mailtext+=" "
-        mailtext=fullen(mailtext)
+        mailtext=self.fullen(mailtext)
         mailtext=mailtext.split("｜　")
         final=""
         for x in mailtext:
